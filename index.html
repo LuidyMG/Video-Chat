@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <style>
+            body
+            {
+                font-family: Arial, Helvetica, sans-serif;
+                background-color: rgb(34, 34, 34);
+                width: 100%;
+                height: 100vh;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .Cam{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                padding: 2px;
+                margin: 5px;
+                color: white;
+            }
+            .allCams
+            {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+            }
+            .current
+            {
+                background-color: rgb(158, 63, 0);
+            }
+            #divConnect
+            {
+                background-color: white;
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                z-index: 999;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="divConnect">
+            <label>Seu nome: </label>
+            <input type="text" id="inputName" />
+            <button onclick="tryConnect()" style="margin-top: 10px">Entrar na conversa</button>
+        </div>
+        <br />
+
+        <video id="webcam" style="opacity: 0;position: absolute;" width="200" height="200"></video>
+        <div id="Cams" class="allCams">
+
+        </div>
+
+        <script>
+            const webcamElement = document.getElementById('webcam');
+            const snapSoundElement = document.getElementById('snapSound');
+            const webcam = new Webcam(webcamElement, 'user', document.createElement('canvas'), snapSoundElement);
+
+            let listUserConnected = [];
+            let joined = false;
+            let client = {};
+
+            const socket = io("https://7000-indigo-jaguar-isuadwan.ws-us04.gitpod.io/");
+            
+            function tryConnect()
+            {
+                client.nome = document.getElementById('inputName').value;
+                socket.emit('joinChat', {nome: document.getElementById('inputName').value});
+            }
+
+            socket.on('joinChat', data => {
+                if(!data.joined)
+                    alert(data.message);
+                client.id = data.clientId;
+                listUserConnected = data.listUserConnected;
+                document.getElementById('divConnect').style = 'display: none';
+                joined = true; 
+                webcam.start()
+                .then(result =>{
+                    setInterval(x => { frameAction() }, /*16.66*/ 33.33);
+                })
+                .catch(err => {
+                    console.log(err);
+                });          
+            });
+
+            function renderCams()
+            {
+                let camsDiv = document.getElementById('Cams');
+
+                let divMyCam = document.createElement('div');
+                divMyCam.className = 'Cam current';
+                let myImg = document.createElement('img');
+                myImg.id = 'myCam';
+                myImg.width = 500;
+                myImg.height= 500;
+                let myName = document.createElement('h3');
+                myName.innerHTML = client.nome;
+                divMyCam.appendChild(myImg);
+                divMyCam.appendChild(myName);
+
+                camsDiv.innerHTML = '';
+                camsDiv.appendChild(divMyCam);
+                for(let userConnected of listUserConnected)
+                {
+                    console.log(userConnected);
+                    if(userConnected.id == client.id)
+                        continue;
+
+                    let divCam = document.createElement('div');
+                    divCam.className = 'Cam';
+                    let img = document.createElement('img');
+                    img.id = 'img-'+userConnected.id;
+                    img.width = 500;
+                    img.height= 500;
+                    let h1Tag = document.createElement('h3');
+                    h1Tag.innerHTML = userConnected.nome;
+                    divCam.appendChild(img);
+                    divCam.appendChild(h1Tag);
+
+                    camsDiv.appendChild(divCam);
+                }
+            }
+
+            function frameAction()
+            {
+                let picture = webcam.snap();
+                document.getElementById('myCam').src = picture;
+                if(joined && listUserConnected.length > 0)
+                    socket.emit('chatLive', picture);
+            }
+
+            socket.on('userJoinInChat', data => {
+                if(!joined)
+                    return;
+                console.log('%c Uma nova pessoa se juntou a conversa!', 'color: green');
+                listUserConnected = data;
+                renderCams();
+            });
+
+            socket.on('leaveChat', data => {
+                if(!joined)
+                    return;
+                listUserConnected = data;
+
+                renderCams();
+            });
+
+            socket.on('chatLiveAll', data => {
+                if(!joined || data.clientId == client.id)
+                    return;
+                    
+                let img = document.getElementById('img-'+data.clientId);
+                img.src = data.myCam;
+            });     
+        </script>
+    </body>
+</html>
