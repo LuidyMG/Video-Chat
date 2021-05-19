@@ -83,7 +83,10 @@
 
             socket.on('joinChat', data => {
                 if(!data.joined)
+                {
                     alert(data.message);
+                    return;
+                }
                 client.id = data.clientId;
                 listUserConnected = data.listUserConnected;
                 document.getElementById('divConnect').style = 'display: none';
@@ -116,7 +119,6 @@
                 camsDiv.appendChild(divMyCam);
                 for(let userConnected of listUserConnected)
                 {
-                    console.log(userConnected);
                     if(userConnected.id == client.id)
                         continue;
 

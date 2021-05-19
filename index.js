@@ -16,6 +16,8 @@ let listUserConnected = [];
 io.on('connection', client => {
     client.on('joinChat', data => { 
         let returnJoin;
+        if(data.nome == undefined || data.nome == '')
+            returnJoin = { joined: false, message: 'Preencha seu nome para poder entrar na chamada.'}
         if(listUserConnected.findIndex(x => x.nome == data.nome) >= 0)
             returnJoin = { joined: false, message: 'Já existe alguem com seu nome dentro da sessão.'}
         
@@ -24,29 +26,22 @@ io.on('connection', client => {
             listUserConnected.push({id: client.id, nome: data.nome});
             returnJoin = {joined: true, listUserConnected, clientId: client.id};
         }
-        /*console.log('---------joinChat--------')
-        console.log(data);
-        console.log(returnJoin);
-        console.log('---------joinChat--------')*/
+        
         client.emit('joinChat', returnJoin);
-        console.log(listUserConnected);
         if(returnJoin.joined)
             io.emit('userJoinInChat', listUserConnected);
     });
 
     client.on('chatLive', data => {
-        //console.log('sas');
         io.emit('chatLiveAll', {clientId: client.id, myCam: data});
     });
 
     client.on('disconnect', () => { 
-        console.log('Cliente '+client.id);
         let index = listUserConnected.findIndex(x => x.id == client.id);
         if(index < 0)
             return;
-        console.log(index);
+
         listUserConnected.splice(index, 1);
-        console.log(listUserConnected);
         io.emit('leaveChat', listUserConnected);
     });
 });
