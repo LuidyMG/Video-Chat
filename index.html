@@ -54,7 +54,7 @@
         <div id="divConnect">
             <label>Seu nome: </label>
             <input type="text" id="inputName" />
-            <button onclick="tryConnect()" style="margin-top: 10px">Entrar na conversa</button>
+            <button id="btnConnect" style="margin-top: 10px">Entrar na conversa</button>
         </div>
         <br />
 
@@ -73,12 +73,12 @@
             let client = {};
 
             const socket = io("https://video-chat-ws2f.onrender.com/");
-            
-            function tryConnect()
-            {
+
+            document.getElementById('btnConnect').addEventListener('click', () => {
+                console.log('rodou's);
                 client.nome = document.getElementById('inputName').value;
                 socket.emit('joinChat', {nome: document.getElementById('inputName').value});
-            }
+            });
 
             socket.on('joinChat', data => {
                 if(!data.joined)
