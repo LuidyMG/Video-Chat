@@ -75,7 +75,7 @@
             const socket = io("https://video-chat-ws2f.onrender.com/");
 
             document.getElementById('btnConnect').addEventListener('click', () => {
-                console.log('rodou's);
+                console.log('rodou');
                 client.nome = document.getElementById('inputName').value;
                 socket.emit('joinChat', {nome: document.getElementById('inputName').value});
             });
