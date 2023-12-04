@@ -47,7 +47,7 @@ io.on('connection', client => {
 });
 
 router.get('/',function(req,res){
-    res.sendFile(path.join(__dirname+'/page.html'));
+    res.sendFile(path.join(__dirname+'/index.html'));
 });
 
 app.use('/', router);
